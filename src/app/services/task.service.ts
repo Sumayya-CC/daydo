@@ -8,7 +8,7 @@ export class TaskService {
     // Get all tasks
     getTasks(): Task[] {
         const tasks = localStorage.getItem(this.storageKey);
-        return tasks ? JSON.parse(tasks).filter((t: { isArchived: any; }) => !t.isArchived) : [];
+        return tasks ? JSON.parse(tasks).filter((t: { isActive: any; }) => t.isActive) : [];
     }
 
     // Save all tasks
@@ -28,7 +28,7 @@ export class TaskService {
         const tasks = this.getTasks();
         const task = tasks.find(t => t.id === id);
         if (task) {
-            task.isArchived = true;
+            task.isActive = false;
         }
         this.saveTasks(tasks);
     }

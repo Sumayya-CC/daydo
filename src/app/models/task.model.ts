@@ -5,5 +5,5 @@ export interface Task {
   date: string;
   priority: 'low' | 'medium' | 'high';
   description?: string;
-  isArchived: boolean;
+  isActive: boolean;
 }
