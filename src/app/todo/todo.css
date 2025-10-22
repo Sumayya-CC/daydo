@@ -17,11 +17,22 @@
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
+/* ADDED: Centering the header content using Flexbox */
+.todo-header {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    padding-bottom: 0; /* Adjust if needed */
+}
+
+/* Ensure the title itself can be centered */
 .todo-title {
-    text-align: center;
+    /* text-align: center; is often enough, but flexbox is more robust */
     font-size: 24px;
     font-weight: 500;
     margin-bottom: 20px;
+    /* Reset Angular Material margin if necessary */
+    margin-left: 0; 
+    margin-right: 0; 
 }
 
 /* Input/Search Row */
