@@ -1,1 +1,47 @@
-<p>todo works!</p>
+<div class="todo-container">
+  <h1>My Todo List</h1>
+
+  <div class="input-group">
+    <mat-form-field appearance="outline">
+      <input matInput placeholder="Enter new task..." [(ngModel)]="newTaskTitle" />
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" (click)="addTask()">Add Task</button>
+    <button mat-stroked-button color="warn" (click)="clearAll()">Clear</button>
+  </div>
+
+  <div class="filter-search">
+    <mat-form-field appearance="outline">
+      <mat-label>Filter by status</mat-label>
+      <mat-select [(ngModel)]="filterStatus">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="completed">Completed</mat-option>
+        <mat-option value="on-hold">On Hold</mat-option>
+        <mat-option value="in-progress">In Progress</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Search</mat-label>
+      <input matInput [(ngModel)]="searchText" />
+    </mat-form-field>
+  </div>
+
+  <mat-card *ngFor="let task of filteredTasks()" class="task-card">
+    <div class="task-header">
+      <h3>{{ task.title }}</h3>
+      <mat-select [(value)]="task.status" (selectionChange)="changeStatus(task, $event.value)">
+        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="completed">Completed</mat-option>
+        <mat-option value="on-hold">On Hold</mat-option>
+        <mat-option value="in-progress">In Progress</mat-option>
+      </mat-select>
+    </div>
+
+    <p class="date">{{ task.date }}</p>
+    <button mat-icon-button color="warn" (click)="deleteTask(task.id)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </mat-card>
+</div>
