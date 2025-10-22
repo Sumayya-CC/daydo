@@ -1,47 +1,76 @@
 <div class="todo-container">
-  <h1>My Todo List</h1>
+    <mat-card class="todo-card">
+        <mat-card-header class="todo-header"> <mat-card-title class="todo-title">My Todo List</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
 
-  <div class="input-group">
-    <mat-form-field appearance="outline">
-      <input matInput placeholder="Enter new task..." [(ngModel)]="newTaskTitle" />
-    </mat-form-field>
+            <div class="input-row">
+                <mat-form-field appearance="outline" class="task-input-field">
+                    <input matInput placeholder="Enter new task..." [(ngModel)]="newTaskTitle"
+                        (keyup.enter)="addTask()">
+                </mat-form-field>
 
-    <button mat-raised-button color="primary" (click)="addTask()">Add Task</button>
-    <button mat-stroked-button color="warn" (click)="clearAll()">Clear</button>
-  </div>
+                <mat-form-field appearance="outline" class="search-input-field">
+                    <input matInput placeholder="Search..." [formControl]="searchControl">
+                    <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
 
-  <div class="filter-search">
-    <mat-form-field appearance="outline">
-      <mat-label>Filter by status</mat-label>
-      <mat-select [(ngModel)]="filterStatus">
-        <mat-option value="all">All</mat-option>
-        <mat-option value="pending">Pending</mat-option>
-        <mat-option value="completed">Completed</mat-option>
-        <mat-option value="on-hold">On Hold</mat-option>
-        <mat-option value="in-progress">In Progress</mat-option>
-      </mat-select>
-    </mat-form-field>
+            </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Search</mat-label>
-      <input matInput [(ngModel)]="searchText" />
-    </mat-form-field>
-  </div>
+            <div class="controls-row">
+                <button mat-flat-button color="accent" (click)="addTask()">Add Task</button>
+                <button mat-button class="clear-btn" (click)="clearAll()">Clear All</button>
 
-  <mat-card *ngFor="let task of filteredTasks()" class="task-card">
-    <div class="task-header">
-      <h3>{{ task.title }}</h3>
-      <mat-select [(value)]="task.status" (selectionChange)="changeStatus(task, $event.value)">
-        <mat-option value="pending">Pending</mat-option>
-        <mat-option value="completed">Completed</mat-option>
-        <mat-option value="on-hold">On Hold</mat-option>
-        <mat-option value="in-progress">In Progress</mat-option>
-      </mat-select>
-    </div>
+                <mat-form-field appearance="fill" class="filter-select">
+                    <mat-label>Filter Status</mat-label>
+                    <mat-select [(ngModel)]="filterStatus" (ngModelChange)="applyStatusFilter($event)">
+                        <mat-option value="all">All</mat-option>
+                        <mat-option *ngFor="let status of taskStatuses.slice(0, 4)" [value]="status">
+                            {{ status | titlecase }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
 
-    <p class="date">{{ task.date }}</p>
-    <button mat-icon-button color="warn" (click)="deleteTask(task.id)">
-      <mat-icon>delete</mat-icon>
-    </button>
-  </mat-card>
+            <mat-divider></mat-divider>
+
+            <div class="task-list" *ngIf="filteredTasks$ | async as tasks; else loading">
+                <mat-card *ngIf="tasks.length === 0" class="no-tasks-card">
+                    <mat-card-content>
+                        No tasks found. Start adding one!
+                    </mat-card-content>
+                </mat-card>
+
+                <mat-card *ngFor="let task of tasks; trackBy: trackById" class="task-item-card">
+                    <mat-card-content class="task-content">
+                        <div class="task-details">
+                            <span class="task-title">{{ task.title }}</span>
+                            <span class="status-badge" [ngClass]="'badge-' + task.status">
+                                {{ task.status }}
+                            </span>
+                            <span class="task-date">{{ task.date }}</span>
+                        </div>
+
+                        <div class="task-actions">
+                            <mat-form-field appearance="fill" class="status-select-field">
+                                <mat-select [value]="task.status" (selectionChange)="changeStatus(task, $event.value)">
+                                    <mat-option *ngFor="let status of taskStatuses.slice(0, 4)" [value]="status">
+                                        {{ status | titlecase }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <button mat-icon-button color="warn" (click)="deleteTask(task.id)" title="Delete Task">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+
+            <ng-template #loading>
+                <p>Loading tasks...</p>
+            </ng-template>
+
+        </mat-card-content>
+    </mat-card>
 </div>
