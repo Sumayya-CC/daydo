@@ -1,65 +1,84 @@
 <div class="todo-container">
     <mat-card class="todo-card">
-        <mat-card-header class="todo-header"> <mat-card-title class="todo-title">My Todo List</mat-card-title>
+        <mat-card-header class="todo-header">
+            <mat-card-title class="todo-title">My Todo List</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-
-            <div class="input-row">
-                <mat-form-field appearance="outline" class="task-input-field">
-                    <input matInput placeholder="Enter new task..." [(ngModel)]="newTaskTitle"
-                        (keyup.enter)="addTask()">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="search-input-field">
-                    <input matInput placeholder="Search..." [formControl]="searchControl">
-                    <mat-icon matSuffix>search</mat-icon>
-                </mat-form-field>
-
+            
+            <!-- 1. Action Row (Add/Clear) - Stays on top left -->
+            <div class="action-row">
+                <!-- Added custom class for vibrant primary button style -->
+                <button mat-flat-button color="accent" class="add-task-btn" (click)="openForm()">
+                    <mat-icon>add_circle_outline</mat-icon> Add Task
+                </button>
+                <button mat-button class="clear-btn" (click)="clearAll()">Clear All Tasks</button>
             </div>
+            
+            <mat-divider class="top-divider"></mat-divider>
 
-            <div class="controls-row">
-                <button mat-flat-button color="accent" (click)="addTask()">Add Task</button>
-                <button mat-button class="clear-btn" (click)="clearAll()">Clear All</button>
-
-                <mat-form-field appearance="fill" class="filter-select">
+            <!-- 2. Filter & Search Row - Next line, balanced -->
+            <div class="filter-search-row">
+                <!-- Filter Select -->
+                <mat-form-field appearance="outline" class="filter-select">
                     <mat-label>Filter Status</mat-label>
-                    <mat-select [(ngModel)]="filterStatus" (ngModelChange)="applyStatusFilter($event)">
+                    <mat-select [formControl]="filterStatusControl">
                         <mat-option value="all">All</mat-option>
-                        <mat-option *ngFor="let status of taskStatuses.slice(0, 4)" [value]="status">
+                        <mat-option *ngFor="let status of taskStatuses" [value]="status">
                             {{ status | titlecase }}
                         </mat-option>
                     </mat-select>
+                </mat-form-field>
+
+                <!-- Search Input -->
+                <mat-form-field appearance="outline" class="search-input-field">
+                    <input matInput 
+                           placeholder="Search tasks..." 
+                           [formControl]="searchControl">
+                    <mat-icon matSuffix>search</mat-icon>
                 </mat-form-field>
             </div>
 
             <mat-divider></mat-divider>
 
-            <div class="task-list" *ngIf="filteredTasks$ | async as tasks; else loading">
-                <mat-card *ngIf="tasks.length === 0" class="no-tasks-card">
-                    <mat-card-content>
-                        No tasks found. Start adding one!
+            <!-- 3. Task List (Signal Access) -->
+            <div class="task-list">
+                
+                <mat-card *ngIf="filteredTasks().length === 0" class="no-tasks-card">
+                    <mat-card-content class="no-tasks-content">
+                        <ng-container *ngIf="searchControl.value || filterStatusControl.value !== 'all'">
+                            <mat-icon>sentiment_dissatisfied</mat-icon> 
+                            No tasks found matching your criteria.
+                        </ng-container>
+                        <ng-container *ngIf="!searchControl.value && filterStatusControl.value === 'all'">
+                            <mat-icon>lightbulb_outline</mat-icon> 
+                            No tasks available. Click 'Add Task' to create one!
+                        </ng-container>
                     </mat-card-content>
                 </mat-card>
-
-                <mat-card *ngFor="let task of tasks; trackBy: trackById" class="task-item-card">
+                
+                <mat-card *ngFor="let task of filteredTasks(); trackBy: trackById" class="task-item-card">
                     <mat-card-content class="task-content">
                         <div class="task-details">
                             <span class="task-title">{{ task.title }}</span>
-                            <span class="status-badge" [ngClass]="'badge-' + task.status">
-                                {{ task.status }}
-                            </span>
-                            <span class="task-date">{{ task.date }}</span>
+                            <p class="task-description">{{ task.description || 'No description provided.' }}</p>
+                            
+                            <!-- Task Meta (Chips/Badges) -->
+                            <div class="task-meta">
+                                <span class="meta-chip status-chip" [ngClass]="'status-' + task.status">
+                                    {{ task.status | titlecase }} 
+                                </span>
+                                <span class="meta-chip priority-chip" [ngClass]="'priority-' + task.priority">
+                                    Priority: {{ task.priority | titlecase }}
+                                </span>
+                                <span class="task-date">Due: {{ task.date }}</span>
+                            </div>
                         </div>
-
+                        
                         <div class="task-actions">
-                            <mat-form-field appearance="fill" class="status-select-field">
-                                <mat-select [value]="task.status" (selectionChange)="changeStatus(task, $event.value)">
-                                    <mat-option *ngFor="let status of taskStatuses.slice(0, 4)" [value]="status">
-                                        {{ status | titlecase }}
-                                    </mat-option>
-                                </mat-select>
-                            </mat-form-field>
-                            <button mat-icon-button color="warn" (click)="deleteTask(task.id)" title="Delete Task">
+                            <button mat-icon-button color="primary" (click)="openForm(task)" title="Edit Task" class="edit-btn">
+                                <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" (click)="deleteTask(task.id)" title="Delete Task" class="delete-btn">
                                 <mat-icon>delete</mat-icon>
                             </button>
                         </div>
@@ -67,10 +86,14 @@
                 </mat-card>
             </div>
 
-            <ng-template #loading>
-                <p>Loading tasks...</p>
-            </ng-template>
-
         </mat-card-content>
     </mat-card>
+    
+    <app-task-form 
+        *ngIf="showTaskForm" 
+        [task]="taskToEdit" 
+        (close)="closeForm()"
+    ></app-task-form>
+    
+    <div *ngIf="showTaskForm" class="overlay"></div>
 </div>
