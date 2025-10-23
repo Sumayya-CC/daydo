@@ -1,154 +1,292 @@
-/* Container and Card */
+/* -----------------------------------------------------------------
+   GLOBAL LAYOUT & CARD STYLES
+----------------------------------------------------------------- */
 .todo-container {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center; /* Center vertically */
     padding: 50px 20px;
     min-height: 100vh;
-    /* Gradient background to match the screenshot */
-    background: linear-gradient(135deg, #4b0082 0%, #6a5acd 50%, #00ced1 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Deep Blue Gradient */
+    font-family: 'Roboto', sans-serif;
 }
 
 .todo-card {
     width: 100%;
-    max-width: 650px;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    max-width: 700px;
+    padding: 30px;
+    border-radius: 16px; /* Increased rounded corners */
+    background: #ffffff;
+    /* Smooth, professional shadow */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
 }
 
-/* ADDED: Centering the header content using Flexbox */
+/* Header & Typography */
 .todo-header {
     display: flex;
-    justify-content: center; /* Center horizontally */
-    padding-bottom: 0; /* Adjust if needed */
+    justify-content: center;
+    padding-bottom: 0;
 }
 
-/* Ensure the title itself can be centered */
 .todo-title {
-    /* text-align: center; is often enough, but flexbox is more robust */
-    font-size: 24px;
-    font-weight: 500;
-    margin-bottom: 20px;
-    /* Reset Angular Material margin if necessary */
-    margin-left: 0; 
-    margin-right: 0; 
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e3c72; /* Deep blue title */
+    margin-bottom: 25px;
+    text-align: center;
 }
 
-/* Input/Search Row */
-.input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.task-input-field {
-    flex-grow: 1;
-}
-
-.search-input-field {
-    width: 150px;
-}
-
-.search-btn {
-    align-self: flex-start;
-    height: 56px; /* Match MatInput height */
-}
-
-/* Controls Row */
-.controls-row {
+/* -----------------------------------------------------------------
+   CONTROL ROWS
+----------------------------------------------------------------- */
+.action-row {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.filter-search-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Button Styling */
+.add-task-btn {
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    /* Vibrant Gradient Primary */
+    background: linear-gradient(45deg, #4CAF50, #8BC34A);
+    color: white !important;
+    box-shadow: 0 4px 8px rgba(0, 150, 0, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.add-task-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 150, 0, 0.5);
 }
 
 .clear-btn {
     color: #f44336; 
     border: 1px solid #f44336; 
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.clear-btn:hover {
+    background-color: rgba(244, 67, 54, 0.05);
+}
+
+/* Search and Filter fields sizing and alignment */
+.search-input-field {
+    width: 100%;
+    max-width: 250px;
+    margin-left: auto; 
 }
 
 .filter-select {
-    margin-left: auto; /* Push filter to the right */
-    width: 120px;
+    width: 100%;
+    max-width: 180px;
 }
 
-/* Task List Styling */
+/* Dividers */
+mat-divider {
+    margin: 10px 0;
+    border-color: #f0f0f0;
+}
+
+/* -----------------------------------------------------------------
+   TASK LIST ITEMS
+----------------------------------------------------------------- */
 .task-list {
-    margin-top: 15px;
+    margin-top: 20px;
 }
 
 .task-item-card {
-    margin-bottom: 10px;
-    padding: 10px 15px;
+    margin-bottom: 12px;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border-left: 5px solid #2a5298; /* Feature border */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Subtle Hover Effect */
+.task-item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .task-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0 !important; /* Override mat-card-content padding */
+    align-items: center; /* Align content vertically */
+    padding: 0 !important; 
 }
 
 .task-details {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    font-size: 16px;
+    flex-direction: column;
+    align-items: flex-start; 
+    gap: 8px;
     flex-grow: 1;
+    margin-right: 20px;
 }
 
 .task-title {
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 19px;
+    color: #333;
+    margin: 0;
+}
+
+.task-description {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0;
+}
+
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .task-date {
-    font-size: 12px;
-    color: #6c757d;
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
 }
 
-.task-actions {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.status-select-field {
-    width: 120px;
-    margin-top: 10px;
-}
-
-/* Status Badges */
-.status-badge {
-    padding: 4px 8px;
+/* Meta Chips (Status and Priority) */
+.meta-chip {
+    padding: 5px 10px;
     border-radius: 15px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
-    color: white;
-    min-width: 70px;
+    min-width: 60px;
     text-align: center;
 }
 
-.badge-completed {
-    background-color: #4caf50; /* Green */
+/* Status Colors */
+.status-completed {
+    background-color: #e8f5e9; /* Light Green Background */
+    color: #388e3c; /* Dark Green Text */
 }
 
-.badge-pending {
-    background-color: #ffc107; /* Yellow */
-    color: #333;
+.status-pending {
+    background-color: #fffde7; /* Light Yellow Background */
+    color: #fbc02d; /* Dark Yellow Text */
 }
 
-.badge-on-hold {
-    background-color: #9e9e9e; /* Gray */
+.status-on-hold {
+    background-color: #f5f5f5; /* Light Gray Background */
+    color: #757575; /* Gray Text */
 }
 
-.badge-in-progress {
-    background-color: #2196f3; /* Blue */
+.status-in-progress {
+    background-color: #e3f2fd; /* Light Blue Background */
+    color: #1976d2; /* Dark Blue Text */
+}
+
+/* Priority Colors */
+.priority-high {
+    background-color: #fbebeb; /* Light Red Background */
+    color: #d32f2f; /* Red Text */
+}
+
+.priority-medium {
+    background-color: #fff8e1; /* Light Orange Background */
+    color: #f57f17; /* Orange Text */
+}
+
+.priority-low {
+    background-color: #e1f5fe; /* Light Cyan Background */
+    color: #0288d1; /* Cyan Text */
+}
+
+/* Task Actions */
+.task-actions button {
+    transition: transform 0.1s;
+}
+
+.task-actions button:hover {
+    transform: scale(1.1);
 }
 
 .no-tasks-card {
     text-align: center;
-    color: #6c757d;
-    padding: 20px;
+    color: #999;
+    padding: 40px;
+    margin-top: 20px;
+    border: 1px dashed #e0e0e0;
+}
+
+.no-tasks-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+}
+
+.no-tasks-content mat-icon {
+    font-size: 36px;
+    height: 36px;
+    width: 36px;
+    color: #ccc;
+}
+
+/* -----------------------------------------------------------------
+   RESPONSIVENESS
+----------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .todo-card {
+        padding: 15px;
+    }
+
+    .action-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .filter-search-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .search-input-field,
+    .filter-select {
+        max-width: 100%;
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .task-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .task-actions {
+        margin-left: 0;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+
+    .task-meta {
+        flex-wrap: wrap;
+        margin-top: 5px;
+    }
+
+    .task-title {
+        font-size: 17px;
+    }
 }

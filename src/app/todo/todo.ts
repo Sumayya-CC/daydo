@@ -1,24 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, TitleCasePipe } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormControl } from '@angular/forms'; // Reactive Forms
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { Observable, combineLatest, map, startWith } from 'rxjs'; 
+import { MatDividerModule } from '@angular/material/divider';
+
+import { TaskFormComponent } from './task-form/task-form/task-form';
 import { TaskService } from '../services/task.service';
 import { Task } from '../models/task.model';
-import { MatDividerModule } from '@angular/material/divider';
+import { combineLatest, map, startWith } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop'; // <-- NEW: RxJS to Signal utility
 
 @Component({
   selector: 'app-todo',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    ReactiveFormsModule, // Required for FormControl
+    ReactiveFormsModule, // <-- Use Reactive Forms
+    TitleCasePipe,
     MatButtonModule,
     MatInputModule,
     MatSelectModule,
@@ -26,80 +29,78 @@ import { MatDividerModule } from '@angular/material/divider';
     MatIconModule,
     MatToolbarModule,
     MatDividerModule,
+    TaskFormComponent,
   ],
   templateUrl: './todo.html',
   styleUrl: './todo.css'
 })
 export class TodoComponent implements OnInit {
-  // The final Observable consumed by the template using the `async` pipe
-  public filteredTasks$!: Observable<Task[]>; 
+  // --- Modern Angular Feature: `inject` ---
+  private taskService = inject(TaskService);
+  private fb = inject(FormBuilder);
 
-  // New Task Input (using FormsModule)
-  newTaskTitle: string = '';
-  
-  // Controls for Filtering/Searching (using Reactive Forms approach for streams)
-  searchControl = new FormControl(''); 
-  filterStatus: Task['status'] | 'all' = 'all'; 
+  // --- Reactive Form Controls for Filtering/Searching ---
+  searchControl = this.fb.control('', { nonNullable: true });
+  filterStatusControl = this.fb.control<Task['status'] | 'all'>('all', { nonNullable: true });
 
-  // Available statuses for the dropdown
-  taskStatuses = ['pending', 'completed', 'on-hold', 'in-progress', 'all'] as const;
+  // --- Signal for Filtered Tasks ---
+  // The stream of tasks, filtered based on the controls' value changes
+  filteredTasks = toSignal(
+    combineLatest([
+      this.taskService.tasks$, // Stream of active tasks
+      this.searchControl.valueChanges.pipe(startWith(this.searchControl.value)),
+      this.filterStatusControl.valueChanges.pipe(startWith(this.filterStatusControl.value)),
+    ]).pipe(
+      map(([tasks, searchTerm, filterStatus]) => 
+        this.applyFilters(tasks, searchTerm, filterStatus)
+      )
+    ),
+    { initialValue: [] } // Initialize with an empty array
+  );
 
-  constructor(private taskService: TaskService) {}
+  // --- Modal State ---
+  showTaskForm: boolean = false;
+  taskToEdit: Task | undefined;
+
+  // Static options for dropdowns
+  taskStatuses = ['pending', 'completed', 'on-hold', 'in-progress'] as const;
 
   ngOnInit(): void {
-    // Combine the task data stream with the user input streams
-    this.filteredTasks$ = combineLatest([
-      this.taskService.tasks$,
-      this.searchControl.valueChanges.pipe(startWith('')), // Start with '' to trigger initial map
-    ]).pipe(
-      map(([tasks, searchTerm]) => {
-        // 1. Status Filter
-        let filtered = tasks;
-        if (this.filterStatus !== 'all') {
-          filtered = filtered.filter(task => task.status === this.filterStatus);
-        }
-
-        // 2. Search Filter
-        if (searchTerm) {
-          filtered = filtered.filter(task =>
-            task.title.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
-        return filtered;
-      })
-    );
+    // No manual subscriptions needed! Everything is managed by `toSignal`.
   }
-  
+
+  // --- Filtering Logic (Pure Function) ---
+  private applyFilters(
+    tasks: Task[],
+    searchTerm: string,
+    filterStatus: Task['status'] | 'all'
+  ): Task[] {
+    let filtered = tasks;
+
+    // 1. Status Filter
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(task => task.status === filterStatus);
+    }
+
+    // 2. Search Filter (by title)
+    if (searchTerm) {
+      filtered = filtered.filter(task =>
+        task.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return filtered;
+  }
+
   // --- Action Handlers ---
 
-  addTask() {
-    if (!this.newTaskTitle.trim()) return;
-
-    const newTask: Task = {
-      id: Date.now(),
-      title: this.newTaskTitle.trim(),
-      status: 'pending',
-      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-      userId: 1,
-      priority: 'medium',
-      isActive: true
-    };
-    
-    this.taskService.addTask(newTask);
-    this.newTaskTitle = '';
+  openForm(task?: Task): void {
+    this.taskToEdit = task; 
+    this.showTaskForm = true;
   }
 
-  // Called when the status filter dropdown is changed
-  applyStatusFilter(newStatus: Task['status'] | 'all'): void {
-    this.filterStatus = newStatus;
-    // Re-triggering the filteredTasks$ stream by causing a side effect on its dependency (tasks$ observable)
-    // We'll call next on the searchControl to re-run the combineLatest pipe without changing the search term
-    this.searchControl.setValue(this.searchControl.value, { emitEvent: true });
-  }
-
-  changeStatus(task: Task, newStatus: Task['status']) {
-    const updated: Task = { ...task, status: newStatus };
-    this.taskService.updateTask(updated);
+  closeForm(): void {
+    this.showTaskForm = false;
+    this.taskToEdit = undefined;
   }
 
   deleteTask(id: number) {
@@ -110,7 +111,6 @@ export class TodoComponent implements OnInit {
     this.taskService.clearAllTasks();
   }
   
-  // TrackBy function for performance optimization in *ngFor
   trackById(index: number, task: Task): number {
     return task.id;
   }
