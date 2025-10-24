@@ -1,117 +1,101 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, TitleCasePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormControl } from '@angular/forms'; // Reactive Forms
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-import { TaskFormComponent } from './task-form/task-form/task-form';
 import { TaskService } from '../services/task.service';
 import { Task } from '../models/task.model';
-import { combineLatest, map, startWith } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop'; // <-- NEW: RxJS to Signal utility
+
+// Import the new standalone components
+import { TaskFormComponent } from './task-form/task-form/task-form'; 
+import { TaskViewCardComponent } from './task-view-card/task-view-card/task-view-card'; 
 
 @Component({
   selector: 'app-todo',
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule, // <-- Use Reactive Forms
-    TitleCasePipe,
+    ReactiveFormsModule,
+    MatCardModule,
     MatButtonModule,
     MatInputModule,
-    MatSelectModule,
-    MatCardModule,
     MatIconModule,
-    MatToolbarModule,
     MatDividerModule,
+    MatSelectModule,
     TaskFormComponent,
+    TaskViewCardComponent, 
+    TitleCasePipe,
   ],
   templateUrl: './todo.html',
-  styleUrl: './todo.css'
+  styleUrls: ['./todo.css'],
 })
-export class TodoComponent implements OnInit {
-  // --- Modern Angular Feature: `inject` ---
+export class TodoComponent {
   private taskService = inject(TaskService);
-  private fb = inject(FormBuilder);
+  
+  // Observables/Signals
+  // FIX: Convert the Observable<Task[]> into a signal<Task[]> for computed() access
+  allTasks = toSignal(this.taskService.tasks$, { initialValue: [] }); 
+  taskStatuses = ['pending', 'in-progress', 'completed', 'on-hold'];
+  
+  // State for the modal form
+  showTaskForm = signal(false);
+  taskToEdit: Task | null = null;
+  
+  // Reactive controls for filtering
+  searchControl = new FormControl('');
+  filterStatusControl = new FormControl('all');
 
-  // --- Reactive Form Controls for Filtering/Searching ---
-  searchControl = this.fb.control('', { nonNullable: true });
-  filterStatusControl = this.fb.control<Task['status'] | 'all'>('all', { nonNullable: true });
+  // Computed signal for combined filtering
+  filteredTasks = computed(() => {
+    // Access the array value by calling the signal (allTasks())
+    const tasks = this.allTasks(); 
+    const searchTerm = this.searchControl.value?.toLowerCase() || '';
+    const filterStatus = this.filterStatusControl.value;
 
-  // --- Signal for Filtered Tasks ---
-  // The stream of tasks, filtered based on the controls' value changes
-  filteredTasks = toSignal(
-    combineLatest([
-      this.taskService.tasks$, // Stream of active tasks
-      this.searchControl.valueChanges.pipe(startWith(this.searchControl.value)),
-      this.filterStatusControl.valueChanges.pipe(startWith(this.filterStatusControl.value)),
-    ]).pipe(
-      map(([tasks, searchTerm, filterStatus]) => 
-        this.applyFilters(tasks, searchTerm, filterStatus)
-      )
-    ),
-    { initialValue: [] } // Initialize with an empty array
-  );
+    return tasks.filter(task => {
+      // 1. Status Filter
+      const statusMatch = (filterStatus === 'all' || task.status === filterStatus);
 
-  // --- Modal State ---
-  showTaskForm: boolean = false;
-  taskToEdit: Task | undefined;
-
-  // Static options for dropdowns
-  taskStatuses = ['pending', 'completed', 'on-hold', 'in-progress'] as const;
-
-  ngOnInit(): void {
-    // No manual subscriptions needed! Everything is managed by `toSignal`.
-  }
-
-  // --- Filtering Logic (Pure Function) ---
-  private applyFilters(
-    tasks: Task[],
-    searchTerm: string,
-    filterStatus: Task['status'] | 'all'
-  ): Task[] {
-    let filtered = tasks;
-
-    // 1. Status Filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(task => task.status === filterStatus);
-    }
-
-    // 2. Search Filter (by title)
-    if (searchTerm) {
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchTerm.toLowerCase())
+      // 2. Search Term Filter (checks title and description)
+      const searchMatch = (
+        task.title.toLowerCase().includes(searchTerm) ||
+        task.description?.toLowerCase().includes(searchTerm)
       );
-    }
-    return filtered;
+
+      return statusMatch && searchMatch;
+    });
+  });
+
+  // Lifecycle/Helper methods
+  trackById(index: number, task: Task): number {
+    return task.id;
   }
 
-  // --- Action Handlers ---
-
-  openForm(task?: Task): void {
-    this.taskToEdit = task; 
-    this.showTaskForm = true;
-  }
-
-  closeForm(): void {
-    this.showTaskForm = false;
-    this.taskToEdit = undefined;
-  }
-
-  deleteTask(id: number) {
+  // CRUD Actions
+  deleteTask(id: number): void {
+    // NOTE: Using direct service call as prompt required no alert/confirm modals
     this.taskService.deleteTask(id);
   }
 
-  clearAll() {
+  clearAll(): void {
+    // NOTE: Using direct service call as prompt required no alert/confirm modals
     this.taskService.clearAllTasks();
   }
-  
-  trackById(index: number, task: Task): number {
-    return task.id;
+
+  // Form Modal Methods
+  openForm(task?: Task): void {
+    this.taskToEdit = task || null;
+    this.showTaskForm.set(true);
+  }
+
+  closeForm(): void {
+    this.showTaskForm.set(false);
+    this.taskToEdit = null;
   }
 }
