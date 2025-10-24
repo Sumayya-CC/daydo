@@ -1,13 +1,17 @@
-import { Component, Input, Output, EventEmitter, inject, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, FormGroup, Validators } from '@angular/forms'; // Reactive Forms
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule, TitleCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+
 import { Task } from '../../../models/task.model';
 import { TaskService } from '../../../services/task.service';
-import { MatIconModule } from '@angular/material/icon';
+import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-task-form',
@@ -16,63 +20,83 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,
-    MatInputModule,
     MatButtonModule,
+    MatInputModule,
     MatSelectModule,
     MatIconModule,
+    MatDatepickerModule,
+    TitleCasePipe,
   ],
+  providers: [provideNativeDateAdapter()], // Required for MatDatepicker
   template: `
     <mat-card class="task-form-card">
-      <mat-card-title class="form-title">{{ isEditMode ? 'Edit Task' : 'Add New Task' }}</mat-card-title>
+      <mat-card-header class="form-header">
+        <mat-card-title>{{ isEditMode ? 'Edit Task' : 'Add New Task' }}</mat-card-title>
+        <button mat-icon-button (click)="closeForm.emit()" class="close-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
       <mat-card-content>
-        <form [formGroup]="taskForm" (ngSubmit)="saveTask()">
+        <form [formGroup]="taskForm" (ngSubmit)="saveTask()" class="task-form-layout">
           
           <!-- Title -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Title</mat-label>
-            <input matInput formControlName="title">
-            <mat-error *ngIf="taskForm.get('title')?.hasError('required')">Title is required</mat-error>
+            <input matInput formControlName="title" placeholder="e.g., Finish report" required>
+            <mat-error *ngIf="taskForm.get('title')?.invalid && taskForm.get('title')?.touched">
+              Title is required.
+            </mat-error>
           </mat-form-field>
-
+          
           <!-- Description -->
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Description</mat-label>
+            <mat-label>Description (Optional)</mat-label>
             <textarea matInput formControlName="description" rows="3"></textarea>
           </mat-form-field>
-          
-          <!-- Status & Priority -->
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="flex-field">
-              <mat-label>Status</mat-label>
-              <mat-select formControlName="status">
-                <mat-option *ngFor="let s of statuses" [value]="s">{{ s | titlecase }}</mat-option>
-              </mat-select>
-            </mat-form-field>
 
-            <mat-form-field appearance="outline" class="flex-field">
-              <mat-label>Priority</mat-label>
-              <mat-select formControlName="priority">
-                <mat-option *ngFor="let p of priorities" [value]="p">{{ p | titlecase }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          
+          <!-- Status -->
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status" required>
+              <mat-option *ngFor="let status of taskStatuses" [value]="status">
+                {{ status | titlecase }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="taskForm.get('status')?.invalid && taskForm.get('status')?.touched">
+              Status is required.
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Priority -->
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="priority" required>
+              <mat-option *ngFor="let priority of taskPriorities" [value]="priority">
+                {{ priority | titlecase }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="taskForm.get('priority')?.invalid && taskForm.get('priority')?.touched">
+              Priority is required.
+            </mat-error>
+          </mat-form-field>
+
           <!-- Date -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Due Date</mat-label>
-            <input matInput type="date" formControlName="date"> 
-            <mat-icon matSuffix>event</mat-icon>
-            <mat-error *ngIf="taskForm.get('date')?.hasError('required')">Date is required</mat-error>
+            <input matInput [matDatepicker]="picker" formControlName="date" required>
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="taskForm.get('date')?.invalid && taskForm.get('date')?.touched">
+              Due Date is required.
+            </mat-error>
           </mat-form-field>
-          
+
           <!-- Actions -->
           <div class="form-actions">
-            <button mat-button type="button" (click)="close.emit()" class="cancel-btn">
-                <mat-icon>close</mat-icon> Cancel
-            </button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="taskForm.invalid" class="save-btn">
-              <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
-              {{ isEditMode ? 'Update Task' : 'Create Task' }}
+            <!-- CRITICAL: Emit close event on cancel -->
+            <button mat-stroked-button type="button" (click)="closeForm.emit()">Cancel</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="taskForm.invalid">
+              {{ isEditMode ? 'Save Changes' : 'Create Task' }}
             </button>
           </div>
         </form>
@@ -80,157 +104,130 @@ import { MatIconModule } from '@angular/material/icon';
     </mat-card>
   `,
   styles: [`
-    /* -----------------------------------------------------------------
-       MODAL STYLES (MATCHING MAIN CARD AESTHETICS)
-    ----------------------------------------------------------------- */
     .task-form-card {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 90%;
-      max-width: 550px;
+      max-width: 500px;
       z-index: 1000;
-      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35); /* Deeper shadow for modal */
-      border: 1px solid #ddd;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      padding: 0;
+      overflow: hidden;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+
+    .form-header {
+      background-color: #6a5acd; /* Primary header color */
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-header mat-card-title {
+      font-size: 1.25rem;
+    }
+
+    .close-btn {
+      color: white;
+      transition: transform 0.2s;
+    }
+    .close-btn:hover {
+        transform: rotate(90deg);
     }
     
-    .form-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: #1e3c72;
-        margin-bottom: 20px;
-        text-align: center;
+    mat-card-content {
+      padding: 24px;
+    }
+
+    .task-form-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
     }
 
     .full-width {
-      width: 100%;
-    }
-    
-    .form-row {
-      display: flex;
-      gap: 15px;
-      width: 100%;
-    }
-    
-    .flex-field {
-      flex: 1;
+      grid-column: 1 / -1;
     }
 
     .form-actions {
+      grid-column: 1 / -1;
       display: flex;
       justify-content: flex-end;
-      gap: 15px;
-      margin-top: 25px;
-    }
-    
-    .save-btn {
-        font-weight: 600;
-        padding: 10px 20px;
-        border-radius: 8px;
-    }
-    
-    .cancel-btn {
-      color: #757575; /* Gray color */
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      gap: 10px;
+      margin-top: 10px;
     }
 
-    @media (max-width: 500px) {
-        .form-row {
-            flex-direction: column;
-        }
-        .form-actions {
-            flex-direction: column-reverse;
-            gap: 10px;
-        }
-        .form-actions button {
-            width: 100%;
+    mat-form-field {
+      width: 100%;
+    }
+    
+    /* Responsive adjustment */
+    @media (max-width: 600px) {
+        .task-form-layout {
+            grid-template-columns: 1fr;
         }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaskFormComponent implements OnChanges {
-  // --- Modern Angular Feature: `inject` ---
-  // Inject services using the `inject` function instead of the constructor for cleaner code
-  private fb = inject(FormBuilder);
+export class TaskFormComponent implements OnInit {
   private taskService = inject(TaskService);
+  private fb = inject(FormBuilder);
 
-  @Input() task: Task | undefined;
-  @Output() close = new EventEmitter<void>();
+  @Input() task: Task | null = null;
+  // Output event to notify the parent to close the form
+  @Output() closeForm = new EventEmitter<void>(); 
 
   taskForm!: FormGroup;
   isEditMode: boolean = false;
 
-  statuses = ['pending', 'completed', 'on-hold', 'in-progress'];
-  priorities = ['low', 'medium', 'high'];
+  taskStatuses = ['pending', 'in-progress', 'completed', 'on-hold'];
+  taskPriorities = ['low', 'medium', 'high'];
 
-  constructor() {
-    this.createForm();
+  ngOnInit(): void {
+    this.isEditMode = !!this.task;
+    this.initForm();
   }
 
-  // Use ngOnChanges to react when the parent passes a new `task` object
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['task'] && this.task) {
-      // Edit Mode: Patch the form with the task details
-      this.isEditMode = true;
-      this.taskForm.patchValue(this.task);
-    } else {
-      // New Task Mode: Reset form to default values
-      this.isEditMode = false;
-      this.taskForm.reset(this.getDefaultTaskValues());
-    }
-  }
-
-  private createForm(): void {
+  private initForm(): void {
     this.taskForm = this.fb.group({
-      title: ['', Validators.required],
-      description: [''],
-      status: ['pending', Validators.required],
-      date: [this.getDefaultDate(), Validators.required],
-      priority: ['medium', Validators.required],
-      // Hidden controls for internal logic
-      id: [null],
-      userId: [1],
-      isActive: [true],
+      id: [this.task?.id || null],
+      title: [this.task?.title || '', Validators.required],
+      description: [this.task?.description || ''],
+      status: [this.task?.status || 'pending', Validators.required],
+      priority: [this.task?.priority || 'medium', Validators.required],
+      date: [this.task?.date || this.getCurrentDate(), Validators.required],
+      // Inherit or set default hidden properties
+      userId: [this.task?.userId || 1],
+      isActive: [this.task?.isActive ?? true],
     });
   }
 
-  private getDefaultTaskValues() {
-    return {
-      title: '',
-      description: '',
-      status: 'pending',
-      date: this.getDefaultDate(),
-      priority: 'medium',
-      id: null,
-      userId: 1,
-      isActive: true,
-    };
-  }
-
-  private getDefaultDate(): string {
-    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  private getCurrentDate(): string {
+    return new Date().toISOString().split('T')[0];
   }
 
   saveTask(): void {
-    if (this.taskForm.invalid) {
-      this.taskForm.markAllAsTouched();
-      return;
+    if (this.taskForm.valid) {
+      const taskData: Task = this.taskForm.value;
+
+      if (this.isEditMode && taskData.id) {
+        this.taskService.updateTask(taskData);
+      } else {
+        this.taskService.addTask(taskData);
+      }
+      // CRITICAL: Emit event to parent to close form after successful save
+      this.closeForm.emit(); 
     }
-
-    const taskData: Task = this.taskForm.value;
-
-    if (this.isEditMode) {
-      // Update: Use the existing ID from the form control
-      this.taskService.updateTask(taskData);
-    } else {
-      // Add: ID is generated in the service to ensure uniqueness
-      this.taskService.addTask(taskData);
-    }
-
-    this.close.emit();
   }
 }
