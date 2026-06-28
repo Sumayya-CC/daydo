@@ -1,59 +1,130 @@
-# Daydo
+# 📋 DayDo - Modern Todo List Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.6.
+A modern and responsive Todo List application built with **Angular** that helps users organize their daily tasks efficiently.
 
-## Development server
+🌐 **Live Demo:** https://daydo-two.vercel.app/
 
-To start a local development server, run:
+## ✨ Features
+
+- ✅ Create new tasks
+- ✏️ Edit existing tasks
+- 🗑️ Delete tasks
+- 🔍 Search tasks instantly
+- 🎯 Filter tasks by status
+- 🚩 Set task priority (Low, Medium, High)
+- 📅 Due date support
+- 📱 Fully responsive design
+- 🎨 Modern and clean UI
+- ⚡ Fast deployment with Vercel
+
+---
+
+## 🛠️ Built With
+
+- Angular (Standalone Components)
+- TypeScript
+- HTML5
+- CSS3
+- Angular Material
+- RxJS
+
+---
+
+## 📸 Screenshots
+
+<img width="1179" height="2134" alt="image" src="https://github.com/user-attachments/assets/16516aa9-791d-461e-b66b-a6e001b5b00c" />
+
+
+---
+
+## 🚀 Getting Started
+
+### Clone the repository
+
+```bash
+git clone https://github.com/Sumayya-CC/daydo.git
+```
+
+### Navigate to the project
+
+```bash
+cd daydo
+```
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Run the application
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open your browser and visit
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```
+http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
+## 📂 Project Structure
+
+```
+src/
+│
+├── app/
+│   ├── components/
+│   │     ├── task-card/
+│   │     ├── add-task-dialog/
+│   │     ├── confirmation-dialog/
+│   │
+│   ├── pages/
+│   │     ├── home/
+│   │
+│   ├── models/
+│   ├── services/
+│   └── shared/
+│
+└── assets/
 ```
 
-## Building
+---
 
-To build the project run:
+## 🎯 Future Improvements
 
-```bash
-ng build
-```
+- 🔐 User Authentication
+- 👤 User Profile
+- 🌙 Dark Mode
+- 🏷️ Task Categories
+- 📅 Calendar View
+- 🔔 Notifications & Reminders
+- ☁️ Firebase Backend
+- 📊 Dashboard Analytics
+- 📱 Progressive Web App (PWA)
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## 📦 Deployment
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+This application is deployed on **Vercel**.
 
-```bash
-ng test
-```
+Live URL:
 
-## Running end-to-end tests
+https://daydo-two.vercel.app/
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
+## 👩‍💻 Author
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+**Sumayya C C**
 
-## Additional Resources
+GitHub:
+https://github.com/Sumayya-CC
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+LinkedIn:
+https://www.linkedin.com/in/sumayya-changaranchola
+
